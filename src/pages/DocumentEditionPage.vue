@@ -81,6 +81,7 @@
             v-show="imageVisibility"
             class="column m-t-sm"
             :class="`${imageVisibility && showContent ? 'is-two-fifths': ''}`"
+            style="height: 100vh;"
           >
             <!-- Visibility widget-->
             <div 
@@ -133,12 +134,19 @@
               </div>
             </div>
 
-            <mirador-viewer
-              v-if="document.manifest_origin_url && !isLoading"
-              :key="$attrs.section === 'facsimile'"
-              :manifest-url="document.manifest_origin_url"
-              :canvas-index="0"
-            />
+            <div v-if="document.manifest_origin_url && !isLoading">
+              <mirador-viewer
+                :key="$attrs.section === 'facsimile'"
+                :manifest-url="document.manifest_origin_url"
+                :canvas-index="0"
+              />
+              <document-transcription
+                v-if="$attrs.section === 'facsimile'"
+                id="facsimile-transcription"
+                :key="transcriptionView"
+                :readonly-data="transcriptionView"
+              />
+            </div>
             <img
               v-else
               :src="require('@/assets/images/document_placeholder.svg')"
@@ -639,7 +647,7 @@ export default {
     methods: {
       ...mapActions('transcription', {
         'fetchTranscriptionContent': 'fetchTranscriptionContent',
-        'createTranscription': 'addNewTranscription'
+        'createTranscription': 'addNewTranscription',
         }),
       ...mapActions('translation', {
         'fetchTranslationContent': 'fetchTranslationContent',
@@ -647,7 +655,8 @@ export default {
         }),
       ...mapActions('document', {
         'fetchOne': 'fetch',
-        'fetchTranscriptionAlignmentView': 'fetchTranscriptionAlignmentView'
+        'fetchTranscriptionAlignmentView': 'fetchTranscriptionAlignmentView',
+        'fetchTranscriptionView': 'fetchTranscriptionView',
         }),
       ...mapActions('commentaries', {
         'fetchCommentariesContent': 'fetchCommentariesContent',
@@ -661,6 +670,12 @@ export default {
         await this.fetchTranslationContent()
         await this.fetchSpeechPartsContent()
 
+
+        if (this.$attrs.section === 'facsimile') {
+          // load the readonly transcription view for the facsimile
+          await this.fetchTranscriptionView()
+        }
+        
         try {
           this.transcriptionAlignmentError = null
           await this.fetchTranscriptionAlignmentView()

@@ -1,0 +1,25 @@
+#vue-mirador-container {
+    min-height: 95%;
+    min-width: 30%;
+    position: relative;
+  }
+  .mosaic-root {
+    top: 0 !important;
+    bottom: 0 !important;
+    right: 0 !important;
+    left: 0 !important;
+  }
+  .mosaic-tile {
+    margin: 0 !important;
+  }
+  .Connect\(WithPlugins\(WindowTopBar\)\)-windowTopBarStyle-16.Connect\(WithPlugins\(WindowTopBar\)\)-focused-15, .mirador16.mirador15 {
+    border-top: 1px solid lightgray !important;
+  }
+
+.mirador-companion-window-right .react-draggable {
+   min-width: 480px !important;
+}
+
+.mirador-companion-window-right .react-draggable form {
+    padding-left: 24px;
+}

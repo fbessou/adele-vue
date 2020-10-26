@@ -1,20 +1,27 @@
 <template>
-  <div
-    v-show="viewerContainer"
-    id="vue-mirador-container"
-  />
+  <div style="height:100vh;">
+    <div
+      v-show="viewerContainer"
+      id="vue-mirador-container"
+    />
+  </div>
 </template>
 
 <script>
+
+import Vue from 'vue';
 import { mapActions, mapState } from "vuex";
+
 import Mirador from "mirador";
-import axios from "axios";
 import annotationPlugins from 'mirador-annotations';
-import LocalStorageAdapter from 'mirador-annotations/lib/LocalStorageAdapter';
+import AdeleAnnotationApiAdapter from '@/modules/adele-annotation-api-adapter';
+import AnnotationsActionBar from '@/components/document/edition/actionbars/AnnotationsActionBar';
 
 export default {
   name: "MiradorViewer",
-  components: {},
+  components: {
+    
+  },
   props: {
     manifestUrl: { type: String, required: true },
     canvasIndex: { type: Number, default: 0 },
@@ -25,10 +32,13 @@ export default {
   data() {
     return {
       viewerContainer: null,
-      resetTimeout: null
+      viewerLoaded: false,
+      miradorLoadingInterval: null
     }
   },
   computed: {
+    ...mapState('workflow', ['currentSection']),
+
     fullConfig() {
       const manifests = {};
       let url = this.manifestUrl
@@ -45,19 +55,12 @@ export default {
           window: {
             allowClose: false,
             allowMaximize: false,
-            defaultSideBarPanel: "info",
-            sideBarOpenByDefault: false,
+            defaultSideBarPanel: this.currentSection === 'facsimile' ? 'annotations' : 'info',
+            sideBarOpen: this.currentSection === 'facsimile',
             hideWindowTitle: true,
             maximizedByDefault: true,
             highlightAllAnnotations: false,
-            panels: { // Configure which panels are visible in WindowSideBarButtons
-              info: true,
-              attribution: true,
-              canvas: false,
-              annotations: true,
-              search: false,
-              layers: false,
-            },
+            defaultSidebarPanelWidth: 350,
           },
           workspace: {
             showZoomControls: true,
@@ -73,66 +76,60 @@ export default {
             enabled: false
           },
           annotation: {
-            adapter: (canvasId) => new LocalStorageAdapter(`localStorage://?canvasId=${canvasId}`),
+            adapter: (canvasId) => new AdeleAnnotationApiAdapter(`localStorage://?canvasId=${canvasId}`),
           },
           ...this.configuration
         }
     }
   },
   watch: {
+    viewerLoaded() {
+      if (this.viewerLoaded) {
+        clearInterval(this.miradorLoadingInterval);
+      }
+    },
     viewerContainer() {
       if (this.viewerContainer && !this.viewer) {
-        // instantiate the viewer with a single manifest & window for simplicity
-        const v = Mirador.viewer(this.fullConfig, [...annotationPlugins])
-        try {
-          //this.viewer = Mirador.viewer(this.fullConfig,[...annotationPlugins]);
-          var action = Mirador.actions.minimizeWindow('1')
-          // Now we can dispatch it.
-          v.store.dispatch(action);
-        } catch (e) {
-          console.warn("Mirrador viewer: ", e);
-        }
-        this.viewer = v;
-
-        this.resetTimeout = setTimeout(() => {
-            const reset = document.querySelector(`button[title='Reset zoom']`);
-        if (reset) {
-          console.log("RESET ZOOM");
-          reset.click();
-        } else {
-          console.log("NO RESET ZOOM")
-        }
-        }, 2000)
-
-
-    }
+        this.viewer = Mirador.viewer(this.fullConfig, [...annotationPlugins]);
+      }
     }
   },
   mounted() {
       this.viewerContainer = document.getElementById('vue-mirador-container');
+      if (this.currentSection === 'facsimile') {
+        this.miradorLoadingInterval = setInterval(() => {
+            const reset = document.querySelector(`button[title='Reset zoom']`);
+            if (reset) {
+              reset.click();
+              this.addAnnotationsActionBar()
+              this.viewerLoaded = true;
+            }
+        },
+        1500);
+      }
   },
   beforeDestroy() {
-    clearTimeout(this.resetTimeout)
+    clearTimeout(this.miradorLoadingInterval)
+  },
+  methods: {
+    addAnnotationsActionBar() {
+      if (this.currentSection === 'facsimile') {
+        const anoToolBarClass =  Vue.extend(AnnotationsActionBar)
+        const header = document.querySelector(`aside[aria-label='Annotations'] .mirador-companion-window-header`);
+
+        const span = document.createElement('span')
+        //span.setAttribute('id', 'annotations-action-bar');
+        //span.setAttribute('style', 'width: 24px; height:24px; background-color:red;');
+        header.appendChild(span);
+
+        const toolbar = new anoToolBarClass({propsData:{}})
+        toolbar.$mount(span);
+      }
+    }
   }
 }
 </script>
 
 <style>
-#vue-mirador-container {
-  min-height: 80vh;
-  min-width: 30%;
-  position: relative;
-}
-.mosaic-root {
-  top: 0 !important;
-  bottom: 0 !important;
-  right: 0 !important;
-  left: 0 !important;
-}
-.mosaic-tile {
-  margin: 0 !important;
-}
-.Connect\(WithPlugins\(WindowTopBar\)\)-windowTopBarStyle-16.Connect\(WithPlugins\(WindowTopBar\)\)-focused-15, .mirador16.mirador15 {
-  border-top: 1px solid lightgray !important;
-}
+ 
 </style>
