@@ -38,6 +38,7 @@ export default {
   },
   computed: {
     ...mapState('workflow', ['currentSection']),
+    ...mapState('document', ['document']),
 
     fullConfig() {
       const manifests = {};
@@ -59,7 +60,7 @@ export default {
             sideBarOpen: this.currentSection === 'facsimile',
             hideWindowTitle: true,
             maximizedByDefault: true,
-            highlightAllAnnotations: false,
+            highlightAllAnnotations: true,
             defaultSidebarPanelWidth: 350,
           },
           workspace: {
@@ -75,8 +76,18 @@ export default {
           workspaceControlPanel: {
             enabled: false
           },
+          annotations: {
+            htmlSanitizationRuleSet: 'iiif', // See src/lib/htmlRules.js for acceptable values
+            filteredMotivations: ['oa:commenting', 'oa:tagging', 'sc:painting', 'commenting', 'tagging', 'describing'],
+          },
           annotation: {
-            adapter: (canvasId) => new AdeleAnnotationApiAdapter(`localStorage://?canvasId=${canvasId}`),
+            adapter: (canvasId) => new AdeleAnnotationApiAdapter(
+              this.document.id,
+              canvasId, 
+              {
+                'fetchAll': this.fetchAll,
+                'fetchAnnotation' : this.fetchAnnotation
+              }),
           },
           ...this.configuration
         }
@@ -112,6 +123,15 @@ export default {
     clearTimeout(this.miradorLoadingInterval)
   },
   methods: {
+    fetchAll(docId, canvasId) {
+      return this.$store.dispatch('annotations/fetchAll', {
+        docId: docId,
+        canvasId: canvasId
+      });
+    },
+    fetchAnnotation() {
+
+    },
     addAnnotationsActionBar() {
       if (this.currentSection === 'facsimile') {
         const anoToolBarClass =  Vue.extend(AnnotationsActionBar)

@@ -134,10 +134,10 @@
               </div>
             </div>
 
-            <div v-if="document.manifest_origin_url && !isLoading">
+            <div v-if="document.manifest_url && !isLoading">
               <mirador-viewer
                 :key="$attrs.section === 'facsimile'"
-                :manifest-url="document.manifest_origin_url"
+                :manifest-url="document.manifest_url"
                 :canvas-index="0"
               />
               <document-transcription
