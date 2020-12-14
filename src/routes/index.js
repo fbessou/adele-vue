@@ -4,6 +4,7 @@ import LandingPage from "@/pages/LandingPage.vue"
 import SearchPage from "@/pages/SearchPage.vue"
 import DocumentPage from "@/pages/DocumentPage.vue"
 import AddDocumentPage from "@/pages/AddDocumentPage.vue"
+import DocumentationPage from "@/pages/DocumentationPage.vue"
 
 import DocumentEditionPage from "@/pages/DocumentEditionPage.vue"
 import LoginPage from "@/pages/LoginPage.vue"
@@ -50,6 +51,12 @@ const router = new VueRouter({
       path: '/documents/:docId/edit/:section',
       component: DocumentEditionPage,
       name: 'document-edition',
+      props: true
+    },
+    {
+      path: '/documentation/:section',
+      component: DocumentationPage,
+      name: 'documentation',
       props: true
     },
     {
