@@ -15,12 +15,7 @@ export default class AdeleStorageAdapter {
     async create(annotation) {
       let fragment = null;
       let svg = null;
-      const emptyAnnoPage = {
-        id: 0,
-        items: [],
-        type: 'AnnotationPage',
-      };
-      const annotationPage = emptyAnnoPage;
+      const annotationPage = await this.all();
       annotationPage.items.push(annotation);
       const fragmentSelector = annotation.target.selector.find(({type}) => type === "FragmentSelector");
       if (fragmentSelector) {
